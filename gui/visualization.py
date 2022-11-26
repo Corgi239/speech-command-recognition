@@ -5,6 +5,7 @@ import librosa
 import visualkeras
 import librosa
 import soundfile as sf
+import io
 
 MODEL_PATH = 'model_CNN/model.h5'
 SAMPLES_TO_CONSIDER = 22050
