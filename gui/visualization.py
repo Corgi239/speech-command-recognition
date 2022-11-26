@@ -11,6 +11,8 @@ SAMPLES_TO_CONSIDER = 22050
 
 
 mapping=[
+        "right",
+        "eight",
         "cat",
         "tree",
         "backward",
