@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import seaborn as sns
 
-DATA_PATH = "data.json"
-SAVED_MODEL_PATH = "model.h5"
+DATA_PATH = "data/data.json"
+SAVED_MODEL_PATH = "model_CNN/model.h5"
 EPOCHS = 30
 BATCH_SIZE = 32
 PATIENCE = 5
