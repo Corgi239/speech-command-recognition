@@ -104,7 +104,8 @@ def CNN_predict(file_path):
 model = load_model(MODEL_PATH)
 
 st.markdown('# Speech command Recognition')
-st.image(visualkeras.layered_view(model, legend=True))
+
+st.image(visualkeras.layered_view(model, legend=True), width=600)
 
 input, output = st.columns(2, gap='large')
 with input:
