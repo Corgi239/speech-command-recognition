@@ -3,8 +3,7 @@ import tensorflow as tf
 import numpy as np
 import librosa
 import visualkeras
-import soundfile as sf
-import io
+import librosa
 
 MODEL_PATH = 'model_CNN/model.h5'
 SAMPLES_TO_CONSIDER = 22050
