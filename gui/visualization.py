@@ -1,14 +1,16 @@
 import streamlit as st
 import tensorflow as tf
+import numpy as np
+import librosa
 import visualkeras
+import soundfile as sf
+import io
 
 MODEL_PATH = 'model_CNN/model.h5'
 SAMPLES_TO_CONSIDER = 22050
 
 
 mapping=[
-        "right",
-        "eight",
         "cat",
         "tree",
         "backward",
@@ -41,7 +43,9 @@ mapping=[
         "five",
         "forward",
         "off",
-        "four"
+        "four",
+        "right",
+        "eight",
         ]
 
 
@@ -62,22 +66,23 @@ def preprocess(file_path, num_mfcc=13, n_fft=2048, hop_length=512):
     """
 
     # load audio file
-    signal, sample_rate = librosa.load(file_path)
+    signal, sample_rate = librosa.load(io.BytesIO(file_path))
 
     if len(signal) >= SAMPLES_TO_CONSIDER:
         # ensure consistency of the length of the signal
         signal = signal[:SAMPLES_TO_CONSIDER]
+    else:
+        signal = np.pad(signal, (0, SAMPLES_TO_CONSIDER - signal.shape[0]))
 
-        # extract MFCCs
-        MFCCs = librosa.feature.mfcc(signal, sample_rate, n_mfcc=num_mfcc, n_fft=n_fft,
-                                         hop_length=hop_length)
-        return MFCCs.T
+    # extract MFCCs
+    MFCCs = librosa.feature.mfcc(signal, sample_rate, n_mfcc=num_mfcc, n_fft=n_fft,
+                                        hop_length=hop_length)
+    return MFCCs.T
 
 
 
 
 def CNN_predict(file_path):
-    # TODO: implement a function that recognizes the recording in the file using the tensorflow model
     """
     :param file_path (str): Path to audio file to predict
     :return predicted_keyword (str): Keyword predicted by the model
@@ -108,10 +113,10 @@ with input:
     st.markdown('## Preview')
     if uploaded_file is not None:
         # To read file as bytes:
-        audio_bytes = uploaded_file.read()
+        audio_bytes = uploaded_file.getvalue()
         st.audio(audio_bytes, format='audio/wav')
         
 with output:
     st.markdown('## Output')
-    
-# st.image(ann_viz(model, view=True, filename='cconstruct_model', title='CNN — Model 1 — Simple Architecture'))
+    if uploaded_file is not None:
+        st.write(CNN_predict(uploaded_file.getvalue()))
