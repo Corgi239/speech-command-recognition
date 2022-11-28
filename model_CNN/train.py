@@ -3,11 +3,12 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
 DATA_PATH = "data.json"
 SAVED_MODEL_PATH = "model.h5"
-EPOCHS = 15
+EPOCHS = 40
 BATCH_SIZE = 32
 PATIENCE = 5
 LEARNING_RATE = 0.0005
@@ -81,25 +82,25 @@ def build_model(input_shape, loss="sparse_categorical_crossentropy", learning_ra
     model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=input_shape,
                                      kernel_regularizer=tf.keras.regularizers.l2(0.001)))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPooling2D((3, 3), strides=(2,2), padding='same'))
+    model.add(tf.keras.layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same'))
+    model.add(tf.keras.layers.Dropout(0.3))
 
     # 2nd conv layer
     model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu',
                                      kernel_regularizer=tf.keras.regularizers.l2(0.001)))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPooling2D((3, 3), strides=(2,2), padding='same'))
+    model.add(tf.keras.layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same'))
 
-
-    # 3rd conv layer
+    # 4rd conv layer
     model.add(tf.keras.layers.Conv2D(32, (2, 2), activation='relu',
                                      kernel_regularizer=tf.keras.regularizers.l2(0.001)))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPooling2D((2, 2), strides=(2,2), padding='same'))
+    model.add(tf.keras.layers.MaxPooling2D((2, 2), strides=(2, 2), padding='same'))
 
     # flatten output and feed into dense layer
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(64, activation='relu'))
-    tf.keras.layers.Dropout(0.3)
+    tf.keras.layers.Dropout(0.4)
 
     # softmax output layer
     model.add(tf.keras.layers.Dense(35, activation='softmax'))
@@ -187,15 +188,13 @@ def main():
     # evaluate network on test set
     test_loss, test_acc = model.evaluate(X_test, y_test)
     print("\nTest loss: {}, test accuracy: {}".format(test_loss, 100*test_acc))
-
-
-    # display a confusion matrix
-    y_pred = np.argmax(model.predict(X_test), axis = 1)
-    confusion_mtx = tf.math.confusion_matrix(y_test, y_pred)
-
+    y_prey = np.argmax(model.predict(X_test), axis=1)
+    confusion_mtx = confusion_matrix(y_test, y_prey)
+    confusion_mtx_norm = confusion_mtx.astype('float') / confusion_mtx.sum(axis=1)[:, np.newaxis]
+    confusion_mtx_norm = np.around(confusion_mtx_norm, decimals=2)
     _, _, commands = load_data(DATA_PATH)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(confusion_mtx,
+    plt.figure(figsize=(20, 18))
+    sns.heatmap(confusion_mtx_norm,
                 xticklabels=commands,
                 yticklabels=commands,
                 annot=True, fmt='g')
