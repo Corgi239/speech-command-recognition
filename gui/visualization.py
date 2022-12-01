@@ -122,6 +122,8 @@ with input:
         st.audio(audio_bytes, format='audio/wav')
     st.markdown("## Recording Input")
     recorded_file = st_audiorec()
+    with st.expander('Available keywords'):
+        st.write(mapping)
     
 
 def create_visualization(file):
