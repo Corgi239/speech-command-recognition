@@ -1,4 +1,6 @@
+import os
 import streamlit as st
+import streamlit.components.v1 as components
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -9,7 +11,9 @@ import io
 
 MODEL_PATH = 'model_CNN/model.h5'
 SAMPLES_TO_CONSIDER = 22050
-
+parent_dir = os.path.dirname(os.path.abspath(__file__))
+build_dir = os.path.join(parent_dir, "st_audiorec/frontend/build")
+st_audiorec = components.declare_component("st_audiorec", path=build_dir)
 
 mapping=[
         "right",
@@ -108,30 +112,44 @@ st.markdown('# Speech command Recognition')
 
 st.image(visualkeras.layered_view(model, legend=True), width=600)
 
-input, output = st.columns(2, gap='large')
+input, output = st.columns([5, 2], gap='large')
 with input:
-    st.markdown('## Input')
+    st.markdown('## File Input')
     uploaded_file = st.file_uploader("Upload your recording here: ", type=['wav'])
-    st.markdown('## Preview')
     if uploaded_file is not None:
-        # To read file as bytes:
+        st.markdown('Preview')
         audio_bytes = uploaded_file.getvalue()
         st.audio(audio_bytes, format='audio/wav')
-        
+    st.markdown("## Recording Input")
+    recorded_file = st_audiorec()
+    
+
+def create_visualization(file):
+    predicted_keyword, confidences = CNN_predict(file)
+    st.markdown(f"I heard the word \"{predicted_keyword}\"")
+    # Plot
+    s = 10
+    ind = np.argpartition(confidences, -s)[-s:]
+    kwrds = np.array(mapping)[ind]
+    confs = confidences[ind]
+    data = pd.DataFrame({'keyword':kwrds, 'confidence':confs})
+    chart = alt.Chart(data).mark_bar().encode(
+        x=alt.X('confidence', axis=alt.Axis(title='confidence')),
+        y=alt.Y('keyword', sort='-x', axis=alt.Axis(title=''))
+    )
+    st.write(chart)
+
 with output:
     st.markdown('## Output')
     if uploaded_file is not None:
-        predicted_keyword, confidences = CNN_predict(uploaded_file.getvalue())
-        st.markdown(f"I heard the word \"{predicted_keyword}\"")
-        # Plot
-        s = 10
-        ind = np.argpartition(confidences, -s)[-s:]
-        kwrds = np.array(mapping)[ind]
-        confs = confidences[ind]
-        data = pd.DataFrame({'kwrds':kwrds, 'confs':confs})
-        chart = alt.Chart(data).mark_bar().encode(
-            x=alt.X('confs', axis=alt.Axis(title='confidence')),
-            y=alt.Y('kwrds', sort='-x', axis=alt.Axis(title=''))
-        )
-        st.write(chart)
+        create_visualization(uploaded_file.getvalue())
+    elif isinstance(recorded_file, dict):  # retrieve audio data
+        with st.spinner('retrieving audio-recording...'):
+            ind, val = zip(*recorded_file['arr'].items())
+            ind = np.array(ind, dtype=int)  # convert to np array
+            val = np.array(val)             # convert to np array
+            sorted_ints = val[ind]
+            stream = io.BytesIO(b"".join([int(v).to_bytes(1, "big") for v in sorted_ints]))
+            wav_bytes = stream.read()
+        create_visualization(wav_bytes)
 
