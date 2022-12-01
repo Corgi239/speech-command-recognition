@@ -1,10 +1,10 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
-import librosa
+import pandas as pd
+import altair as alt
 import visualkeras
 import librosa
-import soundfile as sf
 import io
 
 MODEL_PATH = 'model_CNN/model.h5'
@@ -46,9 +46,7 @@ mapping=[
         "five",
         "forward",
         "off",
-        "four",
-        "right",
-        "eight",
+        "four"
         ]
 
 
@@ -101,7 +99,7 @@ def CNN_predict(file_path):
     predictions = model.predict(MFCCs)
     predicted_index = np.argmax(predictions)
     predicted_keyword = mapping[predicted_index]
-    return predicted_keyword
+    return (predicted_keyword, predictions.flatten())
 
 
 model = load_model(MODEL_PATH)
@@ -123,4 +121,17 @@ with input:
 with output:
     st.markdown('## Output')
     if uploaded_file is not None:
-        st.write(CNN_predict(uploaded_file.getvalue()))
+        predicted_keyword, confidences = CNN_predict(uploaded_file.getvalue())
+        st.markdown(f"I heard the word \"{predicted_keyword}\"")
+        # Plot
+        s = 10
+        ind = np.argpartition(confidences, -s)[-s:]
+        kwrds = np.array(mapping)[ind]
+        confs = confidences[ind]
+        data = pd.DataFrame({'kwrds':kwrds, 'confs':confs})
+        chart = alt.Chart(data).mark_bar().encode(
+            x=alt.X('confs', axis=alt.Axis(title='confidence')),
+            y=alt.Y('kwrds', sort='-x', axis=alt.Axis(title=''))
+        )
+        st.write(chart)
+
