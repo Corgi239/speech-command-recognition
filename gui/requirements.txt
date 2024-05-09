@@ -5,3 +5,4 @@ pandas==1.4.2
 streamlit==1.15.1
 tensorflow==2.11.0
 visualkeras==0.0.2
+Pillow<=9.5.0
